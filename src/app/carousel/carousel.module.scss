@@ -1,0 +1,87 @@
+.slides {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: table-cell;
+  text-align: center;
+  justify-content: space-between;
+  vertical-align: middle;
+}
+
+.list {
+  display: flex;
+  padding: 0;
+  list-style-type: none;
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+
+  & li {
+    cursor: pointer;
+  }
+}
+
+
+.navButtonPre {
+  width: 30px;
+  height: 30px;
+  margin: 0 12px;
+  cursor: pointer;
+  user-select: none;
+  rotate: 90deg;
+  position:relative; right:60px;bottom: 30px;
+  justify-content: space-between;
+
+
+  &:hover {
+    path {
+      fill: #f21919;
+    }
+  }
+}
+.navButtonNex {
+  width: 30px;
+  height: 30px;
+  margin: 0 12px;
+  cursor: pointer;
+  user-select: none;
+  rotate: 90deg;
+  position:relative; right:60px; bottom: -30px;
+  justify-content: space-between;
+
+  &:hover {
+    path {
+      fill: #d81f1f;
+    }
+  }
+}
+.dotList {
+  display: inline-block;
+  margin: 0;
+  padding: 10px 0;
+  list-style-type: none;
+
+
+  & .dot {
+    display: inline-block;
+    width: 4px;
+    width: 6px;
+    max-width: 8px;
+    height: 6px;
+    margin-right: 3px;
+    background-color: #e3e3e3;
+    transition: all 0.25s;
+    cursor: pointer;
+
+    &.active {
+      background-color: #000;
+    }
+
+  }
+}
+
+.dotsControls {
+  display: block;
+  text-align: center;
+  position:relative; right:60px; bottom: -30px;
+}

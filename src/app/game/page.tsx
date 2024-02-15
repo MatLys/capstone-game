@@ -3,7 +3,7 @@ import {useState, useRef, useEffect} from "react"
 import Bar from "./components/bar"
 import './styles/game.scss'
 import 'dotenv/config'
-
+import { usePathname, useSearchParams } from 'next/navigation'
 export default function Game() {
     const [date, setDate] = useState(new Date());
 
@@ -15,6 +15,10 @@ export default function Game() {
     const childNumber = useRef("+16478184659");
     const parentNumber = useRef("+16478184659");
     const alertThreshold = useRef(30); //minutes
+
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
+
 
     //Object array: {medication, time, is_taken, is_missed}
     const medlist = useRef(new Array());
@@ -144,6 +148,10 @@ export default function Game() {
                             <button className="button" onClick={() => resetGame()}>Reset</button>
                         </div>
                     )}
+                </div>
+                <div>
+                    <h1>This is how you access it</h1>
+                    <p>Data: {searchParams.get('char')}</p>
                 </div>
             </div>
         </div>
