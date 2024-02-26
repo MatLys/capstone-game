@@ -8,52 +8,22 @@ export type Slide = {
 export const slides: Slide[] = [
   {
     id: '1',
-    image: '/characters/image.png',
-    charname: 'Fox',
+    image: '/characters/spb1.jpg',
+    charname: 'Sky dog',
   },
   {
     id: '2',
-    image: '/characters/what.png',
-    charname: 'Dog',
+    image: '/characters/spb2.jpg',
+    charname: 'Park rat',
   },
   {
     id: '3',
-    image: '/characters/image.png',
+    image: '/characters/spb3.jpg',
     charname: 'Sand cat',
   },
   {
     id: '4',
-    image: '/characters/image.png',
-    charname: 'Koala',
-  },
-  {
-    id: '5',
-    image: '/characters/dog.svg',
-    charname: 'Rabbit',
-  },
-  {
-    id: '6',
-    image: '/characters/image.png',
-    charname: 'Otter',
-  },
-  {
-    id: '7',
-    image: 'characters/bat.svg',
-    charname: 'Bat',
-  },
-  {
-    id: '8',
-    image: 'characters/toucan.svg',
-    charname: 'Toucan',
-  },
-  {
-    id: '0',
-    image: 'characters/hamster.svg',
-    charname: 'Hamster',
-  },
-  {
-    id: '10',
-    image: 'characters/capybara.svg',
-    charname: 'Capybara',
+    image: '/characters/spb4.jpg',
+    charname: 'Care bear',
   },
 ]

@@ -19,7 +19,6 @@ export default function CreateCharacter() {
   const [username, setusername] = useState('')
   const [password, setpassword] = useState('')
 
-  // const poopImages = useMemo(() => ['/game-asset/poo_1.svg', '/game-asset/poo_2.svg'], [])
 
   const handleChangeName = ( e: React.ChangeEvent<HTMLInputElement> ) => {
     const { value } = e.target
@@ -141,7 +140,7 @@ export default function CreateCharacter() {
                 height={160}
                 priority
               />
-              <h3 style={{ color: isSelected ? 'red' : 'black', fontWeight: isSelected ? 'bold' : 'normal' }}> {slide.charname}</h3>
+              <h3 style={{ color: isSelected ? 'Green' : 'black', fontWeight: isSelected ? 'bold' : 'bold' }}> {slide.charname}</h3>
 
             </div>        
           )}
