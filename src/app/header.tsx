@@ -26,7 +26,7 @@ function Header() {
         <Link href='/'>MediPet</Link>
 
         <button onClick={togglePlayPause}>
-        <img src={isPlaying ? '/game-asset/volume.svg' : '/game-asset/volumeoff.svg'} alt="Volume control" />
+        <img src={isPlaying ? '/game-asset/volume.png' : '/game-asset/volumeoff.png'} alt="Volume control" width={30} height={30} />
       </button>
       </div>
       <nav className='header--nav'>

@@ -13,8 +13,6 @@ import styles from './home.module.scss'
 
 export default function CreateCharacter() {
   const router = useRouter()
-  const [showHeart, setShowHeart] = useState(true)
-  const showHeartRef = useRef(showHeart)
   const [selectedSlide, setSelectedSlide] = useState(slides[0])
   const [username, setusername] = useState('')
   const [password, setpassword] = useState('')
@@ -29,22 +27,6 @@ export default function CreateCharacter() {
     setpassword(value)
   }
 
-  useEffect(() => {
-    showHeartRef.current = showHeart
-  }, [showHeart])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY || document.documentElement.scrollTop
-      if (scrollPosition < 100 !== showHeartRef.current) {
-        setShowHeart(scrollPosition < 100)
-      }
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
-  }, [])
   const [errorMessage, setErrorMessage] = useState('');
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,7 +36,7 @@ export default function CreateCharacter() {
       headers: {
         'Content-Type': 'application/json', 
       },
-      body: JSON.stringify({ param1: username, param2: username }), // Convert parameters to JSON string
+      body: JSON.stringify({ param1: username, param2: username }),  
     }).then(async response => {
             const data = await response.json();
 
@@ -80,7 +62,7 @@ export default function CreateCharacter() {
   return (
     <form className={`${styles['character-page']}`}
 
-          onSubmit={handleSubmit}>
+      onSubmit={handleSubmit}>
 
       {errorMessage && (
         <div className="popup-box">

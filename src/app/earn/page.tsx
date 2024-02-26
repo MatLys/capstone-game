@@ -10,16 +10,14 @@ type Fruit = {
   y: number;
   speed: number;
   acceleration: number;
-  type: string;
-  color: string;
-  flavor: string;
 };
 
-export default function Game() {
+export default function FruitGame() {
   const [score, setScore] = useState(0);
-  const [basketPosition, setBasketPosition] = useState(0);
+  const [catchPosition, setcatchPosition] = useState(0);
   const [fruits, setFruits] = useState<Fruit[]>([]);
-
+  const [gameOver, setGameOver] = useState(false);
+  const [message, setMessage] = useState('');
   useEffect(() => {
     const moveFruits = setInterval(() => {
       setFruits(prevFruits =>
@@ -40,16 +38,13 @@ export default function Game() {
     const timer = setInterval(() => {
       const newFruit: Fruit = {
         id: Date.now(),
-        x: Math.random() * 500,
-        y: 80,
-        speed: 0,
-        acceleration: 0.1,
-        type: 'apple',
-        color: 'blue',
-        flavor: 'sweet'
+        x: Math.random() * 1820,
+        y: 90,
+        speed: 2,
+        acceleration: Math.random(),
       };
       setFruits(prevFruits => [...prevFruits, newFruit]);
-    }, 1000);
+    }, 700);
 
     return () => {
       clearInterval(timer);
@@ -58,16 +53,16 @@ export default function Game() {
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      const newBasketPosition = Math.max(0, Math.min(e.clientX, 500));
-      setBasketPosition(newBasketPosition);
+      const catchPosition = Math.max(0, Math.min(e.clientX, 1820));
+      setcatchPosition(catchPosition);
 
       const fruitsToRemove: number[] = [];
       fruits.forEach(fruit => {
 
-        if (fruit.y >= 840 && fruit.x >= basketPosition && fruit.x <= basketPosition + 100) {
+        if (fruit.y >= 800 && fruit.x >= catchPosition && fruit.x <= catchPosition + 100) {
           setScore(prevScore => prevScore + 1);
           fruitsToRemove.push(fruit.id);
-        } else if (fruit.y >= 840 ) {
+        } else if (fruit.y >= 800 ) {
             fruitsToRemove.push(fruit.id);
         }
       });
@@ -79,21 +74,60 @@ export default function Game() {
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [basketPosition, fruits]);
+  }, [catchPosition, fruits]);
+
+  useEffect(() => {
+    if (score >= 20) {
+      setGameOver(true);
+      setMessage('You reached a score of 20! GAME OVER!');
+    }
+  }, [score]);
+
+  const handleRedirect = () => {
+    // Perform redirection logic here
+    window.location.href = '/';
+  };
 
   return (
     <div>
+      <style>
+        {`
+          body {
+            background-image: url('/game-asset/background.jpg');
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding: 0;
+          }
+        `}
+      </style>
+
+      {gameOver && (
+        <div className="popup-box">
+          <div className="popup">
+          <p>{message}</p>
+          <button className="popup button"  onClick={handleRedirect}>Exit</button>
+          </div>
+        </div>
+      )}
       <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ height: '90vh', width: '100%', border: '1px solid black', overflow: 'hidden' }}>
-          <div style={{ height: '20px', width: '100px', backgroundColor: 'black', position: 'absolute', bottom: 0, left: basketPosition }} />
-          {fruits.map(fruit => (
-            <div key={fruit.id} style={{ height: '20px', width: '20px', backgroundColor: 'blue', position: 'absolute', left: fruit.x, top: fruit.y }} />
-          ))}
-        </div>
-        <div style={{ height: '4vh', width: '100%', backgroundColor: 'black', color: 'white', textAlign: 'center', fontSize: '30px',position: 'relative',
-    top: '-890px' }}>
-          Score: {score}
-        </div>
+      <div style={{ position: 'absolute', bottom: 0, left: catchPosition }}>
+          <img src="/characters/spb1.png" alt="Basket" style={{ height: '80px', width: '80px' }} />
+        </div>        
+      {fruits.map(fruit => (
+          <div key={fruit.id} style={{ position: 'absolute', left: fruit.x, top: fruit.y, height: '50px', width: '50px'}}>
+            {fruit.id % 9 === 1 && <img src="/game-asset/watermelon.svg" alt="Fruit 1" style={{ height: '53px', width: '53px' }} />}
+            {fruit.id % 9 === 2 && <img src="/game-asset/guava.svg" alt="Fruit 2" style={{ height: '50px', width: '50px' }} />}
+            {fruit.id % 9 === 3 && <img src="/game-asset/pineapple.svg" alt="Fruit 3" style={{ height: '70px', width: '70px' }} />}
+            {fruit.id % 9 === 0 && <img src="/game-asset/grape.svg" alt="Fruit 4" style={{ height: '55px', width: '55px' }} />}
+            {fruit.id % 9 === 4 && <img src="/game-asset/coconut.svg" alt="Fruit 4" style={{ height: '50px', width: '50px' }} />}
+            {fruit.id % 9 === 5 && <img src="/game-asset/orange.svg" alt="Fruit 4" style={{ height: '50px', width: '50px' }} />}
+            {fruit.id % 9 === 6 && <img src="/game-asset/strawberry.svg" alt="Fruit 4" style={{ height: '50px', width: '50px' }} />}
+          </div>
+        ))}
+      </div>
+      <div style={{ height: '4vh', width: '100%', backgroundColor: 'black', color: 'white', textAlign: 'center', fontSize: '30px', position: 'relative', top: '-982px' }}>
+        Score: {score}
       </div>
     </div>
   );
