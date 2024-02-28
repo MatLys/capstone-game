@@ -31,12 +31,12 @@ export default function CreateCharacter() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    fetch('https://api.npms.io/v2/invalid-url', {
+    fetch('http://127.0.0.1:1492/users/login', {
       method: 'POST', 
       headers: {
         'Content-Type': 'application/json', 
       },
-      body: JSON.stringify({ param1: username, param2: username }),  
+      body: JSON.stringify({ username: username, password: password }),  
     }).then(async response => {
             const data = await response.json();
 

@@ -37,7 +37,7 @@ function Header() {
           </li>
           <li>
             {/* Might include this game details? */}
-            <Link href='/the about page'>About</Link>
+            <Link href='http://localhost:8000/index.html'>About</Link>
           </li>
         </ul>
       </nav>
