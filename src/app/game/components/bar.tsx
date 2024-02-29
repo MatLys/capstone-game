@@ -11,7 +11,7 @@ interface BarProps {
 export default function Bar( { title, percent }: BarProps ) {
   return (
     <div className={'bar--container'}>
-      <h4 style={{ alignSelf: 'start' }}>{title}</h4>
+      <h4 style={{ alignSelf: 'start' , marginLeft:"5%"}}>{title}</h4>
       <div className={'bar'}>
         <ProgressBar percent={percent} variant='yellow' size='small'/>
       </div>

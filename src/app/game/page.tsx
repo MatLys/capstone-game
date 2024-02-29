@@ -1,9 +1,16 @@
 "use client"
 import {useState, useRef, useEffect} from "react"
-import Bar from "./components/bar"
+import Bar from "./components/Bar"
 import './styles/game.scss'
 import 'dotenv/config'
-import { usePathname, useSearchParams } from 'next/navigation'
+import MedModal from "./components/MedModal"
+import Dropdown from 'react-bootstrap/Dropdown';
+import Carousel from 'react-bootstrap/Carousel';
+import Accordion from 'react-bootstrap/Accordion';
+import Card from 'react-bootstrap/Card';
+import { useAccordionButton } from 'react-bootstrap/AccordionButton';
+import { Button } from "react-bootstrap"
+
 export default function Game() {
     const [date, setDate] = useState(new Date());
 
@@ -16,12 +23,13 @@ export default function Game() {
     const parentNumber = useRef("+16478184659");
     const alertThreshold = useRef(30); //minutes
 
-    const pathname = usePathname()
-    const searchParams = useSearchParams()
-
 
     //Object array: {medication, time, is_taken, is_missed}
     const medlist = useRef(new Array());
+
+
+    //Misc page control variables
+    const medSelection = useRef(false);
     
     //Get game data
     useEffect(() => {
@@ -128,32 +136,155 @@ export default function Game() {
         setHealth(100);
     }
 
+    function handleMedSubmit() {
+        medSelection.current = false;
+    }
+
+    function CustomToggle({ children, eventKey }: any) {
+        const decoratedOnClick = useAccordionButton(eventKey, () =>{});
+      
+        return (
+          <button type="button" className="accordion-header" onClick={decoratedOnClick}>
+            {children}
+          </button>
+        );
+      }
+
     return(
-        <div className="main--container">
-            <div className="game--container">
+        <div className="game--container">
+
+            <link href="https://fonts.cdnfonts.com/css/comic-helvetic" rel="stylesheet"/>
+
+            <div className="main-param-bar">
+                <h4 className="points--container">{points}</h4>
+                <Bar title="Hunger" percent={hunger}/>
+                <Bar title="Happiness" percent={happiness}/>
+                <Bar title="Health" percent={health}/>
+            </div>
+
+            {/* <div style={{display:"flex"}}>
+                <button className="button" onClick={() => tookMedication("")}>Take pill</button>
+                <button className="button" onClick={() => missedMedication("")}>Forget pill</button>
+            </div> */}
+            <div className="med-info--container">
+                <h1>May 26 2022 8:33AM</h1>
+                <h1>Good Morning!</h1>
+                {/* <h1>Dexedrine (5mg, Pill): May 26 2022 8:33AM</h1>
+                <Accordion defaultActiveKey="0">
+                    <Card.Header>
+                        <CustomToggle eventKey="0">General</CustomToggle>
+                    </Card.Header>
+                    <Accordion.Collapse eventKey="0">
+                        <Card.Body className="accordion-body">
+                            
+                            <div className="accordion-flex-parent">
+                                How did you take your medicine?
+                                <div className="accordion-flex-child">
+                                <Dropdown>
+                                    <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                        Orally
+                                    </Dropdown.Toggle>
+                                    <Dropdown.Menu>
+                                        <Dropdown.Item href="#/action-1">Orally</Dropdown.Item>
+                                        <Dropdown.Item href="#/action-2">Suborally</Dropdown.Item>
+                                        <Dropdown.Item href="#/action-3">Instilled</Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown>
+                                </div>
+                            </div>
+                            
+                            <div style={{height: "10px"}}/>
+
+                            <div className="accordion-flex-parent">
+                                How many pills did you take?
+                                <div className="accordion-flex-child">
+                                    <Dropdown>
+                                        <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                            1
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu>
+                                            <Dropdown.Item href="#/action-1">1</Dropdown.Item>
+                                            <Dropdown.Item href="#/action-2">2</Dropdown.Item>
+                                            <Dropdown.Item href="#/action-3">3</Dropdown.Item>
+                                            <Dropdown.Item>4</Dropdown.Item>
+                                            <Dropdown.Item>5</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                </div>
+                                
+                            </div>
+                        </Card.Body>
+                    </Accordion.Collapse>
+
+                    <Card.Header>
+                        <CustomToggle eventKey="1">Procedure</CustomToggle>
+                    </Card.Header>
+                    <Accordion.Collapse eventKey="1">
+                        <Card.Body className="accordion-body">
+                            
+                            <div className="accordion-flex-parent">
+                                How did you take your medicine?
+                                <div className="accordion-flex-child">
+                                <Dropdown>
+                                    <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                        Orally
+                                    </Dropdown.Toggle>
+                                    <Dropdown.Menu>
+                                        <Dropdown.Item href="#/action-1">Orally</Dropdown.Item>
+                                        <Dropdown.Item href="#/action-2">Suborally</Dropdown.Item>
+                                        <Dropdown.Item href="#/action-3">Instilled</Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown>
+                                </div>
+                            </div>
+                            
+                            <div style={{height: "10px"}}/>
+
+                            <div className="accordion-flex-parent">
+                                How many pills did you take?
+                                <div className="accordion-flex-child">
+                                    <Dropdown>
+                                        <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                            1
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu>
+                                            <Dropdown.Item href="#/action-1">1</Dropdown.Item>
+                                            <Dropdown.Item href="#/action-2">2</Dropdown.Item>
+                                            <Dropdown.Item href="#/action-3">3</Dropdown.Item>
+                                            <Dropdown.Item>4</Dropdown.Item>
+                                            <Dropdown.Item>5</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                </div>
+                                
+                            </div>
+                        </Card.Body>
+                    </Accordion.Collapse>
+                </Accordion>
+
+                <div style={{height: "10px"}}/>
+
+                <Button style={{marginLeft: "90%", backgroundColor: "green"}}>Submit</Button> */}
+            </div>
+
+            <div className="room--container">
+                <img className="rm cabinet" src="images/cabinet/cabinet_closed_tint.png"/>
+                <button className="rm cabinet-button" onClick={() => {medSelection.current = true}}/>
+                {medSelection.current && (
+                    <MedModal handleSubmit={handleMedSubmit}/>
+                    //<img className = "rm cabinet-open" src="images/cabinet/cabinet_open_tint.png"/>
+                )}
+            </div>
+            
+            {health <= 0 && (
                 <div style={{display:"flex"}}>
-                    <div className="points--container">{points}</div>
-                    <Bar title="Hunger" percent={hunger}/>
-                    <Bar title="Happiness" percent={happiness}/>
-                    <Bar title="Health" percent={health}/>`
-                </div>
-                <div style={{display:"flex"}}>
-                    <button className="button" onClick={() => tookMedication("")}>Take pill</button>
-                    <button className="button" onClick={() => missedMedication("")}>Forget pill</button>
-                </div>
-                <div style={{display:"flex"}}>
-                    {health <= 0 && (
                         <div>
                             You fucking died.
                             <button className="button" onClick={() => resetGame()}>Reset</button>
                         </div>
-                    )}
                 </div>
-                <div>
-                    <h1>This is how you access it</h1>
-                    <p>Data: {searchParams.get('char')}</p>
-                </div>
-            </div>
+            )}
+
         </div>
     );
 }
