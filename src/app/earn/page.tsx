@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import './styles/game.scss';
+// import './styles/game.scss';
 import 'dotenv/config';
 
 type Fruit = {
@@ -85,7 +85,7 @@ export default function FruitGame() {
 
   const handleRedirect = () => {
     // Perform redirection logic here
-    window.location.href = '/';
+    window.location.href = '/game';
   };
 
   return (

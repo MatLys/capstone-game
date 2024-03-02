@@ -67,7 +67,7 @@ export default function CreateCharacter() {
       {errorMessage && (
         <div className="popup-box">
           <div className="popup">
-            <p>{errorMessage}</p>
+            <p>{"Wrong username or password. \n "}</p>
             <button onClick={() => setErrorMessage('')}>Close</button>
           </div>
         </div>

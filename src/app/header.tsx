@@ -19,6 +19,11 @@ function Header() {
       audio.play();
     }
   };
+
+  const handleReload = () => {
+    window.location.href = '/earn';
+  };
+  
   return (
     <header className={"head"}>
       <div className='logo--container'>

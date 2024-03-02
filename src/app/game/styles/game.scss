@@ -17,7 +17,14 @@
 .main {
   background-color: #4dead3;
 }
-
+  .body--container {
+    display: flex;
+    flex-direction: column;
+    max-width: 960px;
+    min-width: 100%;
+    /* max-height: 200px; */
+    background-color: #94C0B6;
+  } 
   .game--container {
     position: absolute;
     display: flex;
