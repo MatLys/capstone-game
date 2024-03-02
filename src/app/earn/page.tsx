@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react";
-// import './styles/game.scss';
 import 'dotenv/config';
 
 type Fruit = {
