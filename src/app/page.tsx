@@ -88,7 +88,7 @@ export default function CreateCharacter() {
       <div className={styles['textboxPass']}>
         <h2>Password</h2>
         <input
-          type='text'
+          type='password'
           placeholder='Enter your password'
           value={password}
           onChange={handleChangePass}

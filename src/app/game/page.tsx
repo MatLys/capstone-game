@@ -10,8 +10,14 @@ import Accordion from 'react-bootstrap/Accordion';
 import Card from 'react-bootstrap/Card';
 import { useAccordionButton } from 'react-bootstrap/AccordionButton';
 import { Button } from "react-bootstrap"
+import { useSearchParams } from "next/navigation"
+import {slides} from "../slides"
+import Questionnaire from "./components/Questionnaire"
 
 export default function Game() {
+
+    const searchParams = useSearchParams();
+
     const [date, setDate] = useState(new Date());
 
     const [points, setPoints] = useState(0);
@@ -19,26 +25,69 @@ export default function Game() {
     const [happiness, setHappiness] = useState(100);
     const [health, setHealth] = useState(100);
 
+    const childID = useRef(-1);
     const childNumber = useRef("+16478184659");
     const parentNumber = useRef("+16478184659");
     const alertThreshold = useRef(30); //minutes
+    const missThreshold = useRef(30); //minutes
 
-
-    //Object array: {medication, time, is_taken, is_missed}
     const medlist = useRef(new Array());
 
-
     //Misc page control variables
-    const medSelection = useRef(false);
+    const showModal = useRef(false);
+    const showQuestionnaire = useRef(false);
+    const [selectedMed, setSelectedMed] = useState(-1);
+
+    const left = useRef(new Array());
+
+    const mounted = useRef(false);
     
     //Get game data
     useEffect(() => {
-        //Fetch game data on first render.
-        //...
-        medlist.current.push({medication: "tylenol", time: "08:00", is_taken: false, is_missed: false});
-        medlist.current.push({medication: "advil", time: "12:00", is_taken: false, is_missed: false});
-        medlist.current.push({medication: "aspirin", time: "18:00", is_taken: false, is_missed: false});
+        if (!mounted.current) {
+            const uname = searchParams.get("user");
+            fetch("http://127.0.0.1:1492/children/byparent/" + uname, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data);
+                setPoints(data.Points);
+                setHunger(data.Hunger);
+                setHappiness(data.Happiness);
+                setHealth(data.Health);
+                childID.current = data.id;
+                childNumber.current = data.Child_phone;
+                parentNumber.current = data.Parent_phone;
+                alertThreshold.current = data.Alert_threshold;
+                missThreshold.current = data.Miss_threshold;
+
+                //Process medication schedule data
+                const medStringArray = data.Medicine_schedule.split(",");
+                medStringArray.forEach((medString: String) => {
+                    const params = medString.split(" - ");
+
+                    const schedule_id = params[0];
+                    const date = new Date(params[1]);
+                    const med = params[2];
+                    const dose = params[3];
+                    const isTaken = params[4];
+
+                    if (isTaken === "Not taken") medlist.current.push({schedule_id: schedule_id, medication: med, dose: dose, date: date, is_taken: false});
+                });
+            });
+        }
+
+        return () => {mounted.current = true};
     }, []);
+
+    //Save the game if the game data changes
+    useEffect(() => {
+        saveGame();
+    }, [points, hunger, happiness, health]);
 
     //Clock
     useEffect(() => {
@@ -51,26 +100,16 @@ export default function Game() {
 
     //Medication check
     useEffect(() => {
-        const midnight = new Date();
-        midnight.setHours(0, 0, 0, 0);
-        if (date.toTimeString() === midnight.toTimeString()) {
-            medlist.current.forEach((medication) => medication.taken = false);
-            setHealth((health + 25 > 100)? 100: health + 25)
-        }
 
-        medlist.current.forEach((medication) => {
-            var medDate = new Date();
-            medDate.setHours(
-                parseInt(medication.time.split(":")[0]),
-                parseInt(medication.time.split(":")[1]),
-                0);
-            if(date.valueOf() - medDate.valueOf() == alertThreshold.current * -60000) {
-                alertMedication(medication.med);
-            }
-            if(date.valueOf() - medDate.valueOf() == alertThreshold.current * 60000 && !medication.is_taken) {
-                missedMedication(medication.med);
-            }
-        });
+        left.current = new Array();
+
+        for (var i = 0; i < medlist.current.length; i++) {
+            const medication = medlist.current[i];
+            const secondsLeft = Math.round((medication.date.valueOf() - date.valueOf()) / 1000);
+            if (secondsLeft == Math.round(alertThreshold.current*60)) alertMedication(medication.medication);
+            if (secondsLeft == Math.round(missThreshold.current*-60) && !medication.is_taken) missedMedication(medication.medication);
+            left.current.push(secondsLeft);
+        }
     }, [date]);
 
     function sendSMS(number:string, message:string) {
@@ -93,40 +132,52 @@ export default function Game() {
         sendSMS(childNumber.current, message);
     }
 
-    function tookMedication(med: string) {
-        setTaken(med, true);
-        setHunger((hunger - 25 < 0)? 0: hunger - 25);
-        if (hunger <= 0) setPoints(points + 10);
+    function saveGame() {
+        fetch("http://127.0.0.1:1492/children/" + childID.current, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                Points: points,
+                Hunger: hunger,
+                Happiness: happiness,
+                Health: health,
+            })
+        })
+        .then((response) => response.json())
+        .then((data) => console.log(JSON.stringify(data)));
+    }
+
+    function tookMedication(mednum: number) {
+        // Update TAKEN value for medication.
+        fetch("http://127.0.0.1:1492/schedule/" + medlist.current[mednum].schedule_id, {
+            method: "PUT",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({taken: true})})
+        .then((response) => response.json())
+        .then((data) => {
+            if(!data.error) {
+            medlist.current[mednum].is_taken = true;
+            setHunger((hunger - 25 < 0)? 0: hunger - 25);
+            if (hunger <= 0) setPoints(points + 10);
+            const message_parent = "Your child has taken their prescribed medication at the time of this message: " + medlist.current[mednum].medication + " (" + medlist.current[mednum].dose + ")."
+            sendSMS(parentNumber.current, message_parent);
+        }});
     }
     
     function missedMedication(med: string) {
-        const message_parent = "ECE498B Missed medication alert: to parent."
+        const message_parent = "Your child has missed their prescribed medication at the time of this message: " + med + "."
         sendSMS(parentNumber.current, message_parent);
 
-        const message_child = "ECE498B Missed Medication alert: to child."
+        const message_child = "You have just missed taking your " + med + ". Keep up with your prescription to gain points!"
         sendSMS(childNumber.current, message_child);
 
-        setMissed(med, true);
         setHunger((hunger + 25 > 100)? 100: hunger + 25);
         if (hunger >= 100) setHealth((health - 25 < 0)? 0: health - 25);
-    }
-
-    function setTaken(med: string, taken: boolean) {
-        for(var i = 0; i < medlist.current.length; i++) {
-            if (medlist.current[i].med === med) {
-                medlist.current[i].taken = taken;
-                break;
-            }
-        }
-    }
-
-    function setMissed(med: string, missed: boolean) {
-        for(var i = 0; i < medlist.current.length; i++) {
-            if (medlist.current[i].med === med) {
-                medlist.current[i].missed = missed;
-                break;
-            }
-        }
+        if (health <= 0) setPoints((points - 10 < 0)? 0: points - 10);
     }
 
     function resetGame() {
@@ -136,23 +187,54 @@ export default function Game() {
         setHealth(100);
     }
 
-    function handleMedSubmit() {
-        medSelection.current = false;
+    function handleMedSelect(mednum: number) {
+        setSelectedMed(mednum);
+    
+        if (mednum == -1) {
+            showQuestionnaire.current = false;
+            showModal.current = false;
+        } else {
+            showQuestionnaire.current = true;;
+        }
     }
 
-    function CustomToggle({ children, eventKey }: any) {
-        const decoratedOnClick = useAccordionButton(eventKey, () =>{});
-      
-        return (
-          <button type="button" className="accordion-header" onClick={decoratedOnClick}>
-            {children}
-          </button>
-        );
-      }
+    function dateString() {
+        const str1 = date.toLocaleDateString('en-us', {
+            year:"numeric",
+            month:"short",
+            day:"numeric",
+            hourCycle: "h12",
+            hour: "numeric",
+            minute: "numeric"
+        }).replaceAll(',', '');
+
+        return str1;
+    }
+
+    function dayPeriodString() {
+        var str1 = "";
+
+        if(date.getHours() <= 11) str1 = "Good Morning!";
+        else if (date.getHours() <= 15) str1 = "Good Afternoon!";
+        else if (date.getHours() <= 21) str1 = "Good Evening!";
+
+        return str1
+    }
+
+    function getCharacterSprite() {
+        const imgnum = searchParams.get("image");
+        
+        var imgurl = "";
+        slides.forEach((slide) => {
+            if (slide.id === imgnum) imgurl = slide.image;
+        });
+
+        return imgurl;
+    }
 
     return(
         <div className="game--container">
-
+            {/* {process.env.API_ENDPOINT} */}
             <link href="https://fonts.cdnfonts.com/css/comic-helvetic" rel="stylesheet"/>
 
             <div className="main-param-bar">
@@ -162,128 +244,34 @@ export default function Game() {
                 <Bar title="Health" percent={health}/>
             </div>
 
-            {/* <div style={{display:"flex"}}>
-                <button className="button" onClick={() => tookMedication("")}>Take pill</button>
-                <button className="button" onClick={() => missedMedication("")}>Forget pill</button>
-            </div> */}
             <div className="med-info--container">
-                <h1>May 26 2022 8:33AM</h1>
-                <h1>Good Morning!</h1>
-                {/* <h1>Dexedrine (5mg, Pill): May 26 2022 8:33AM</h1>
-                <Accordion defaultActiveKey="0">
-                    <Card.Header>
-                        <CustomToggle eventKey="0">General</CustomToggle>
-                    </Card.Header>
-                    <Accordion.Collapse eventKey="0">
-                        <Card.Body className="accordion-body">
-                            
-                            <div className="accordion-flex-parent">
-                                How did you take your medicine?
-                                <div className="accordion-flex-child">
-                                <Dropdown>
-                                    <Dropdown.Toggle variant="success" id="dropdown-basic">
-                                        Orally
-                                    </Dropdown.Toggle>
-                                    <Dropdown.Menu>
-                                        <Dropdown.Item href="#/action-1">Orally</Dropdown.Item>
-                                        <Dropdown.Item href="#/action-2">Suborally</Dropdown.Item>
-                                        <Dropdown.Item href="#/action-3">Instilled</Dropdown.Item>
-                                    </Dropdown.Menu>
-                                </Dropdown>
-                                </div>
-                            </div>
-                            
-                            <div style={{height: "10px"}}/>
-
-                            <div className="accordion-flex-parent">
-                                How many pills did you take?
-                                <div className="accordion-flex-child">
-                                    <Dropdown>
-                                        <Dropdown.Toggle variant="success" id="dropdown-basic">
-                                            1
-                                        </Dropdown.Toggle>
-                                        <Dropdown.Menu>
-                                            <Dropdown.Item href="#/action-1">1</Dropdown.Item>
-                                            <Dropdown.Item href="#/action-2">2</Dropdown.Item>
-                                            <Dropdown.Item href="#/action-3">3</Dropdown.Item>
-                                            <Dropdown.Item>4</Dropdown.Item>
-                                            <Dropdown.Item>5</Dropdown.Item>
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-                                </div>
-                                
-                            </div>
-                        </Card.Body>
-                    </Accordion.Collapse>
-
-                    <Card.Header>
-                        <CustomToggle eventKey="1">Procedure</CustomToggle>
-                    </Card.Header>
-                    <Accordion.Collapse eventKey="1">
-                        <Card.Body className="accordion-body">
-                            
-                            <div className="accordion-flex-parent">
-                                How did you take your medicine?
-                                <div className="accordion-flex-child">
-                                <Dropdown>
-                                    <Dropdown.Toggle variant="success" id="dropdown-basic">
-                                        Orally
-                                    </Dropdown.Toggle>
-                                    <Dropdown.Menu>
-                                        <Dropdown.Item href="#/action-1">Orally</Dropdown.Item>
-                                        <Dropdown.Item href="#/action-2">Suborally</Dropdown.Item>
-                                        <Dropdown.Item href="#/action-3">Instilled</Dropdown.Item>
-                                    </Dropdown.Menu>
-                                </Dropdown>
-                                </div>
-                            </div>
-                            
-                            <div style={{height: "10px"}}/>
-
-                            <div className="accordion-flex-parent">
-                                How many pills did you take?
-                                <div className="accordion-flex-child">
-                                    <Dropdown>
-                                        <Dropdown.Toggle variant="success" id="dropdown-basic">
-                                            1
-                                        </Dropdown.Toggle>
-                                        <Dropdown.Menu>
-                                            <Dropdown.Item href="#/action-1">1</Dropdown.Item>
-                                            <Dropdown.Item href="#/action-2">2</Dropdown.Item>
-                                            <Dropdown.Item href="#/action-3">3</Dropdown.Item>
-                                            <Dropdown.Item>4</Dropdown.Item>
-                                            <Dropdown.Item>5</Dropdown.Item>
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-                                </div>
-                                
-                            </div>
-                        </Card.Body>
-                    </Accordion.Collapse>
-                </Accordion>
-
-                <div style={{height: "10px"}}/>
-
-                <Button style={{marginLeft: "90%", backgroundColor: "green"}}>Submit</Button> */}
+                {!showQuestionnaire.current && (
+                    <>
+                        <h1>{dateString()}</h1>
+                        <h1>{dayPeriodString()}</h1>
+                    </>
+                )}
+                {showQuestionnaire.current && (<Questionnaire medication={medlist.current[selectedMed]} handleSubmit={() => tookMedication(selectedMed)}/>)}
             </div>
 
             <div className="room--container">
                 <img className="rm cabinet" src="images/cabinet/cabinet_closed_tint.png"/>
-                <button className="rm cabinet-button" onClick={() => {medSelection.current = true}}/>
-                {medSelection.current && (
-                    <MedModal handleSubmit={handleMedSubmit}/>
-                    //<img className = "rm cabinet-open" src="images/cabinet/cabinet_open_tint.png"/>
+                <img className="rm cabinet-open" src="images/cabinet/cabinet_open_3.png" onClick={() => {showModal.current = true}}/>
+                <img className="rm sprite" src={getCharacterSprite()}/>
+                {/* <button className="rm cabinet-button" onClick={() => {showModal.current = true}}/> */}
+                {showModal.current && (
+                    <MedModal medcount={medlist.current.length} handleSelect={(mednum:number) => {handleMedSelect(mednum)}} isTaken={(mednum:number) => {return medlist.current[mednum].is_taken}}/>
                 )}
             </div>
             
-            {health <= 0 && (
+            {/* {health <= 0 && (
                 <div style={{display:"flex"}}>
                         <div>
-                            You fucking died.
+                            You died.
                             <button className="button" onClick={() => resetGame()}>Reset</button>
                         </div>
                 </div>
-            )}
+            )} */}
 
         </div>
     );
