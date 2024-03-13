@@ -71,7 +71,7 @@ export default function Questionnaire(props: Props) {
 
     return(
         <>
-                <h2>{medTitle()}</h2>
+                <h3>{medTitle()}</h3>
                 <Accordion defaultActiveKey="0">
                     <Card.Header>
                         <CustomToggle eventKey="0">Information</CustomToggle>

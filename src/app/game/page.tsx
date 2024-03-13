@@ -277,8 +277,17 @@ export default function Game() {
         return str1
     }
 
+    function nextMedString() {
+        //Find nearest positive med time
+        if (medlist.current.length <= 0) return "You have no awaiting medications.";
+
+
+    }
+
     function nextMedicationString() {
         if (medlist.current.length <= 0) return "You have no awaiting medications."
+
+        //Find largest med time
         var secondsLeft = left.current[0];
         for (var i = 0; i < medlist.current.length; i++) {
             if(!medlist.current[i].is_taken) {
@@ -293,6 +302,8 @@ export default function Game() {
             if(left.current[i] > secondsLeft) secondsLeft = left.current[i];
         }
 
+        //If largest med time is negative, use largest med time for display
+
         if (secondsLeft < 0) {
             if (secondsLeft > -3600) {
                 const minutesLeft = Math.round(-secondsLeft/60);
@@ -303,6 +314,22 @@ export default function Game() {
             }
         }
 
+        //Else, use smallest positive med time
+        //Find smallest positive
+        var secondsLeft = left.current[0];
+        for (var i = 0; i < medlist.current.length; i++) {
+            if(!medlist.current[i].is_taken && left.current[i] >= 0) {
+                secondsLeft = left.current[i];
+                break;
+            }
+            if(i == medlist.current.length-1) return "You have no awaiting medications."
+        }
+
+        for (var i = 0; i < left.current.length; i++) {
+            if(medlist.current[i].is_taken || left.current[i] < 0) continue;
+            if(left.current[i] < secondsLeft) secondsLeft = left.current[i];
+        }
+
         if (secondsLeft < 3600) {
             const minutesLeft = Math.round(secondsLeft/60);
             return "You have " + minutesLeft.toString() + " minutes until your next medication."
@@ -311,7 +338,7 @@ export default function Game() {
             return "You have " + hoursLeft.toString() + " hours until your next medication."
         }
 
-        return "You have no awaiting medications."
+        return "You are not overdue on any medications."
     }
 
     function getCharacterSprite() {
