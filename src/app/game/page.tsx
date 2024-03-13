@@ -189,7 +189,8 @@ export default function Game() {
         .then((data) => {
             if(!data.error) {
             medlist.current[mednum].is_taken = true;
-            setHunger((hunger - 25 < 0)? 0: hunger - 25);
+            setHealth((health + 25 > 100)? 100: health + 25);
+            if (health >= 100) setHunger((hunger - 25 < 0)? 0: hunger - 25);
             if (hunger <= 0) setPoints(points + 10);
             const message_parent = "Your child has taken their prescribed medication at the time of this message: " + medlist.current[mednum].medication + " (" + medlist.current[mednum].dose + ")."
             sendSMS(parentNumber.current, message_parent);
