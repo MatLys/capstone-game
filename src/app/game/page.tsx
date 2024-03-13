@@ -41,6 +41,7 @@ export default function Game() {
     const [selectedMed, setSelectedMed] = useState(-1);
     const [doorOpen, setDoorOpen] = useState(false);
     const [roomClass, setRoomClass] = useState("rm room--container room-closed");
+    const [hoveredStoreItemID, setHoveredStoreItemID] = useState(-1);
 
     const left = useRef(new Array());
 
@@ -75,12 +76,12 @@ export default function Game() {
                     const params = medString.split(" - ");
 
                     const schedule_id = params[0];
-                    const date = new Date(params[1]);
+                    const med_date = new Date(params[1]);
                     const med = params[2];
                     const dose = params[3];
                     const isTaken = params[4];
 
-                    if (isTaken === "Not taken") medlist.current.push({schedule_id: schedule_id, medication: med, dose: dose, date: date, is_taken: false});
+                    if (isTaken === "Not taken") medlist.current.push({schedule_id: schedule_id, medication: med, dose: dose, date: med_date, is_taken: false});
                 });
             });
         }
@@ -120,7 +121,8 @@ export default function Game() {
     useEffect(() => {
         const intervalId = setInterval(() => {
             setHappiness((happiness - 4 < 0)? 0: happiness - 4);
-        }, 86400)
+            // setHappiness((happiness + 8 > 100)? 100: happiness + 8);
+        }, 60000)
     
         return () => clearInterval(intervalId);
     })
@@ -138,6 +140,11 @@ export default function Game() {
             })})
         .then(response => {response.json()
         .then(data => {console.log(date.toISOString() + 'SMS SENT: ' + data.body)})})
+    }
+
+    function sendDailyReport() {
+        const score = points*0.2 + happiness*0.2 + hunger*0.1 + health*0.5;
+        const message_parent = 'Medibot end of day report: your child scored ' + score.toString() + ' points today.';
     }
 
     function alertMedication(med: string) {
@@ -179,6 +186,8 @@ export default function Game() {
             const message_parent = "Your child has taken their prescribed medication at the time of this message: " + medlist.current[mednum].medication + " (" + medlist.current[mednum].dose + ")."
             sendSMS(parentNumber.current, message_parent);
         }});
+
+        medlist.current[mednum].is_taken = true;
     }
     
     function missedMedication(med: string) {
@@ -260,6 +269,43 @@ export default function Game() {
         return str1
     }
 
+    function nextMedicationString() {
+        if (medlist.current.length <= 0) return "You have no awaiting medications."
+        var secondsLeft = left.current[0];
+        for (var i = 0; i < medlist.current.length; i++) {
+            if(!medlist.current[i].is_taken) {
+                secondsLeft = left.current[i];
+                break;
+            }
+            if(i == medlist.current.length-1) return "You have no awaiting medications."
+        }
+
+        for (var i = 0; i < left.current.length; i++) {
+            if(medlist.current[i].is_taken) continue;
+            if(left.current[i] > secondsLeft) secondsLeft = left.current[i];
+        }
+
+        if (secondsLeft < 0) {
+            if (secondsLeft > -3600) {
+                const minutesLeft = Math.round(-secondsLeft/60);
+                return "You are " + minutesLeft.toString() + " minutes overdue on your last medication."
+            } if (secondsLeft <= -3600) {
+                const hoursLeft = Math.round(-secondsLeft/3600);
+                return "You are " + hoursLeft.toString() + " hours overdue on your last medication."
+            }
+        }
+
+        if (secondsLeft < 3600) {
+            const minutesLeft = Math.round(secondsLeft/60);
+            return "You have " + minutesLeft.toString() + " minutes until your next medication."
+        } if (secondsLeft >= 3600) {
+            const hoursLeft = Math.round(secondsLeft/3600);
+            return "You have " + hoursLeft.toString() + " hours until your next medication."
+        }
+
+        return "You have no awaiting medications."
+    }
+
     function getCharacterSprite() {
         const imgnum = searchParams.get("image");
         
@@ -269,6 +315,23 @@ export default function Game() {
         });
 
         return imgurl;
+    }
+
+    function storeCostMessage() {
+
+        switch(hoveredStoreItemID) {
+            case 0:
+                    return "Cost: 30\tHappiness: +50"
+                break;
+            case 1:
+                    return "Cost: 10\tHappiness: +20"
+                break;
+            case 2:
+                    return "Cost: 20\tHappiness: +30"
+                break;
+            default:
+                return "";
+        }
     }
 
     return(
@@ -283,13 +346,17 @@ export default function Game() {
             </div>
 
             <div className="med-info--container">
-                {!showQuestionnaire.current && (
+                {!showQuestionnaire.current && !showStore.current && (
                     <>
                         <h1>{dateString()}</h1>
                         <h1>{dayPeriodString()}</h1>
+                        <h1>{nextMedicationString()}</h1>
                     </>
                 )}
                 {showQuestionnaire.current && (<Questionnaire medication={medlist.current[selectedMed]} handleSubmit={() => tookMedication(selectedMed)}/>)}
+                {showStore.current && (
+                        <h1>{storeCostMessage()}</h1>
+                )}
             </div>
 
             <div className={roomClass}>
@@ -303,22 +370,16 @@ export default function Game() {
                 )}
                 {showStore.current && (
                     <div className="rm store_container">
-                        <img className="rm store-item" src="images/hamburger.png" style={{top: "73.5%", left: "49%", opacity: (points < 50)? 0.5: 1}} onClick={() => handleStoreSelect(0)}/>
-                        <img className="rm store-item" src="images/pizza.png" style={{top: "74%", left: "60%", opacity: (points < 10)? 0.5: 1}} onClick={() => handleStoreSelect(1)}/>
-                        <img className="rm store-item" src="images/chickenburger.png" style={{top: "74%", left: "39%", opacity: (points < 20)? 0.5: 1}} onClick={() => handleStoreSelect(2)}/>
+                        <img className="rm store-item" src="images/hamburger.png" style={{top: "73.5%", left: "49%", opacity: (points < 50)? 0.5: 1}} onClick={() => handleStoreSelect(0)}
+                            onMouseOver={() => setHoveredStoreItemID(0)} onMouseOut={() => setHoveredStoreItemID(-1)}/>
+                        <img className="rm store-item" src="images/pizza.png" style={{top: "74%", left: "60%", opacity: (points < 10)? 0.5: 1}} onClick={() => handleStoreSelect(1)}
+                            onMouseOver={() => setHoveredStoreItemID(1)} onMouseOut={() => setHoveredStoreItemID(-1)}/>
+                        <img className="rm store-item" src="images/chickenburger.png" style={{top: "74%", left: "39%", opacity: (points < 20)? 0.5: 1}} onClick={() => handleStoreSelect(2)}
+                            onMouseOver={() => setHoveredStoreItemID(2)} onMouseOut={() => setHoveredStoreItemID(-1)}/>
                         <img className="rm home-icon" src="images/home_icon.png" onClick={() => handleStoreSelect(-1)}/>
                     </div>
                 )}
             </div>
-            
-            {/* {health <= 0 && (
-                <div style={{display:"flex"}}>
-                        <div>
-                            You died.
-                            <button className="button" onClick={() => resetGame()}>Reset</button>
-                        </div>
-                </div>
-            )} */}
 
         </div>
     );
