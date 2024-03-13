@@ -10,10 +10,6 @@ export class MessageTool {
         this.twilioNumber=twilioNumber;
     }
 
-    sendMessage_fake(targ_number:string, message:string) {
-        //...
-    }
-
     sendMessage(targ_number: string, message:string) {
         const client = require('twilio')(this.accountSid, this.authToken);
         client.messages.create({

