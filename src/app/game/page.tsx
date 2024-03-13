@@ -106,6 +106,13 @@ export default function Game() {
     //Medication check
     useEffect(() => {
 
+        const midnight = new Date();
+        midnight.setHours(0, 0, 0, 0);
+        if (date.toTimeString() === midnight.toTimeString()) {
+            sendDailyReport();
+            setHealth((health + 25 > 100)? 100: health + 25)
+        }
+
         left.current = new Array();
 
         for (var i = 0; i < medlist.current.length; i++) {
@@ -144,11 +151,12 @@ export default function Game() {
 
     function sendDailyReport() {
         const score = points*0.2 + happiness*0.2 + hunger*0.1 + health*0.5;
-        const message_parent = 'Medibot end of day report: your child scored ' + score.toString() + ' points today.';
+        const message_parent = 'Medibot end of day reward report: your child scored ' + score.toString() + ' points today.';
+        sendSMS(parentNumber.current, message_parent);
     }
 
     function alertMedication(med: string) {
-        const message = "ECE498B Pending medication alert: to child"
+        const message = "Hello - only a few minutes until you need to take your " + med + "! Watch the game."
         sendSMS(childNumber.current, message);
     }
 
